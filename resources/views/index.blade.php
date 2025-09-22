@@ -29,19 +29,26 @@
 
       <!-- Upload Excel -->
       <form method="POST" action="{{ route('sms.upload') }}" enctype="multipart/form-data" class="mb-10 space-y-4">
-        @csrf
-        <label class="block font-semibold text-gray-700">Upload File Excel</label>
-        <input type="file" name="file" accept=".xlsx,.xls"
-               class="file:mr-4 file:py-2 file:px-4 
-                      file:rounded-full file:border-0 
-                      file:text-sm file:font-semibold
-                      file:bg-blue-50 file:text-blue-700
-                      hover:file:bg-blue-100
-                      border border-gray-300 rounded-lg p-2 w-full text-gray-700" required>
-        <button type="submit"
-                class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg shadow-md transition">
-          ⬆️ Upload & Kirim SMS
-        </button>
+          @csrf
+          <label class="block font-semibold text-gray-700">Upload File Excel</label>
+          <input type="file" name="file" accept=".xlsx,.xls"
+                class="file:mr-4 file:py-2 file:px-4 
+                        file:rounded-full file:border-0 
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100
+                        border border-gray-300 rounded-lg p-2 w-full text-gray-700" required>
+
+          <label class="block font-semibold text-gray-700 mt-4">Template Pesan</label>
+          <textarea name="template" rows="3"
+                    placeholder="Contoh: Halo {nama}, jangan lupa hadir besok!"
+                    class="border border-gray-300 rounded-lg p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required></textarea>
+
+          <button type="submit"
+                  class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg shadow-md transition">
+            ⬆️ Upload & Kirim SMS
+          </button>
       </form>
 
       <div class="relative flex items-center mb-10">
@@ -69,8 +76,30 @@
           🚀 Kirim SMS
         </button>
       </form>
+      <div class="text-center mt-6">
+        <a href="{{ route('sms.history') }}" class="text-indigo-600 hover:underline font-medium">📜 Lihat Riwayat Pengiriman</a>
     </div>
   </div>
 
+
+
 </body>
+<script>
+let processId = null; // Dapatkan dari response upload
+function pollProgress() {
+    if (!processId) return;
+    fetch('/progress-status/' + processId)
+        .then(res => res.json())
+        .then(data => {
+            // Update progress bar/tabel di halaman
+            // data.rows = array hasil progress
+            // data.done = true jika sudah selesai
+            updateProgressTable(data.rows);
+            if (!data.done) setTimeout(pollProgress, 2000);
+        });
+}
+function updateProgressTable(rows) {
+    // Render tabel progress sesuai data.rows
+}
+</script>
 </html>
