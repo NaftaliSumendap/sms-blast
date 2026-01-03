@@ -6,22 +6,31 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Message;
-use App\Models\MessageBatch; // Import Model Batch
+use App\Models\MessageBatch;
 use Carbon\Carbon;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /**
+     * Register any application services.
+     */
     public function register(): void
     {
         //
     }
 
+    /**
+     * Bootstrap any application services.
+     */
     public function boot(): void
     {
+        // Gunakan Bootstrap 5 untuk pagination tabel
         Paginator::useBootstrapFive();
 
-        // Logika Lonceng Notifikasi Global
+        // Logika Global untuk Lonceng Notifikasi
+        // Data ini akan dikirim ke 'layouts.app' setiap kali halaman dimuat
         View::composer('layouts.bar', function ($view) {
             $notifications = collect();
             $count = 0;
@@ -39,22 +48,23 @@ class AppServiceProvider extends ServiceProvider
                     ->get()
                     ->map(function ($msg) {
                         return (object) [
+                            'id' => $msg->id,
                             'type' => 'manual',
                             'title' => $msg->phone, // Judul: Nomor HP
-                            'desc' => $msg->content, // Deskripsi: Isi Pesan
+                            'desc' => Str::limit($msg->content, 40), // Deskripsi: Potongan pesan
                             'time' => $msg->due_date,
-                            'link' => route('pengiriman-terjadwal') // Link ke halaman jadwal
+                            'link' => route('pengiriman-terjadwal') // Klik lari ke halaman jadwal
                         ];
                     });
 
-                // 2. AMBIL BATCH/FOLDER (Grup)
-                // Syarat: Punya pesan yang due_date-nya hari ini
+                // 2. AMBIL BATCH/FOLDER (Grup dari Excel)
+                // Syarat: Punya pesan di dalamnya yang due_date-nya hari ini
                 $batches = MessageBatch::where('user_id', $userId)
                     ->whereHas('messages', function ($q) use ($today) {
                         $q->whereDate('due_date', $today);
                     })
                     ->with(['messages' => function($q) use ($today) {
-                        // Ambil 1 pesan tercepat hari ini untuk patokan jam notifikasi
+                        // Ambil 1 pesan paling awal hari ini untuk menentukan jam notifikasi
                         $q->whereDate('due_date', $today)->orderBy('due_date', 'asc');
                     }])
                     ->withCount(['messages as today_count' => function ($q) use ($today) {
@@ -66,19 +76,21 @@ class AppServiceProvider extends ServiceProvider
                         $time = $firstMsg ? $firstMsg->due_date : now();
 
                         return (object) [
+                            'id' => $batch->id,
                             'type' => 'batch',
                             'title' => $batch->batch_name, // Judul: Nama File Excel
-                            'desc' => $batch->today_count . " pesan jatuh tempo hari ini", // Deskripsi: Jumlah
+                            'desc' => $batch->today_count . " pesan jatuh tempo hari ini", // Deskripsi: Jumlah pesan
                             'time' => $time,
-                            'link' => route('pengiriman-terjadwal') // Link ke halaman jadwal
+                            'link' => route('pengiriman-terjadwal') // Klik lari ke halaman jadwal
                         ];
                     });
 
-                // 3. GABUNGKAN & URUTKAN BERDASARKAN JAM
+                // 3. GABUNGKAN & URUTKAN BERDASARKAN WAKTU
                 $notifications = $manuals->concat($batches)->sortBy('time');
                 $count = $notifications->count();
             }
 
+            // Kirim variabel ke View
             $view->with('todayNotifications', $notifications);
             $view->with('notificationCount', $count);
         });

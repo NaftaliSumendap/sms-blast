@@ -18,7 +18,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
 
 Route::get('/', function () {
-    return view('index');
+    return view('beranda');
 });
 
 Route::get('/tulis-pesan', function () {
@@ -39,6 +39,8 @@ Route::put('/pesan/{id}/update', [SmsController::class, 'updateMessage'])->name(
 Route::delete('/pesan/{id}/delete', [SmsController::class, 'deleteMessage'])->name('sms.delete');
 Route::post('/pesan/{id}/resend', [SmsController::class, 'resendMessage'])->name('sms.resend');
 
+Route::delete('/batch/{id}/delete', [SmsController::class, 'deleteBatch'])->name('sms.delete_batch');
+
     // RUTE BARU: Kirim Ulang MASSAL (Batch)
 Route::post('/batch/{id}/resend', [SmsController::class, 'resendBatch'])->name('sms.resend_batch');
 
@@ -51,6 +53,8 @@ Route::delete('/buku-telepon/delete-all', [ContactController::class, 'destroyAll
 Route::delete('/buku-telepon/{id}', [ContactController::class, 'destroy'])->name('contacts.destroy');
 
 Route::get('/riwayat-pesan', [SmsController::class, 'history'])->name('riwayat-pesan');
+
+Route::get('/riwayat-export', [SmsController::class, 'exportHistory'])->name('sms.export');
 
 Route::get('/syarat-ketentuan', function () {
     return view('syarat-ketentuan');

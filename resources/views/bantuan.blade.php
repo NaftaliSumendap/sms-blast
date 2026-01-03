@@ -49,6 +49,7 @@
                                         </ul>
                                     </li>
                                     <li>Aktifkan servisnya, dan selesai! HP Anda siap menembakkan pesan! 🚀</li>
+                                    <li>Note : Untuk mencegah error, jangan keluar dari aplikasi SMSGatenya</li>
                                 </ol>
                             </div>
 

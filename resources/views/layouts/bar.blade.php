@@ -152,7 +152,7 @@
         .notification-badge { position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; background-color: #dc3545; color: white; font-size: 0.65rem; font-weight: bold; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
         
-        .dropdown-menu-notify { width: 320px; border: none; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border-radius: 16px; overflow: hidden; }
+        .dropdown-menu-notify { width: 350px; border: none; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border-radius: 16px; overflow: hidden; }
         .dropdown-header-notify { background-color: #008f53; color: white; padding: 1rem; font-weight: bold; }
         .notify-item { padding: 12px 20px; border-bottom: 1px solid #eee; display: block; text-decoration: none; color: #333; transition:0.2s; }
         .notify-item:hover { background-color: #f8f9fa; }
@@ -209,11 +209,6 @@
                         <i class="fas fa-clock"></i> Pengiriman Terjadwal
                     </a>
                 </li>
-                 <!-- <li class="nav-item">
-                    <a class="nav-link {{ request()->is('balas-otomatis') ? 'active' : '' }}" href="/balas-otomatis">
-                        <i class="fas fa-robot"></i> Balas Otomatis
-                    </a>
-                </li> -->
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('riwayat-pesan') ? 'active' : '' }}" href="/riwayat-pesan">
                         <i class="fas fa-history"></i> Riwayat Pesan
@@ -277,64 +272,76 @@
                 </div>
                 
                 <div class="d-flex align-items-center">
-                    <!-- Dropdown Notifikasi -->
+                    
+                    <!-- DROPDOWN NOTIFIKASI -->
                     <div class="dropdown">
                         <button class="btn-icon-soft position-relative text-decoration-none border-0" type="button" id="notifyDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifikasi">
-                            <i class="far fa-bell fs-5"></i>
+                            <i class="far fa-bell fs-5 {{ isset($notificationCount) && $notificationCount > 0 ? 'text-warning' : '' }}"></i>
                             @if(isset($notificationCount) && $notificationCount > 0)
                                 <span class="notification-badge">{{ $notificationCount }}</span>
                             @endif
                         </button>
 
-                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-notify" aria-labelledby="notifyDropdown">
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-notify" aria-labelledby="notifyDropdown" style="width: 350px;">
                             <div class="dropdown-header-notify d-flex justify-content-between align-items-center">
-                                <span>Jatuh Tempo Hari Ini</span>
+                                <span><i class="fas fa-clock me-2"></i> Menunggu Persetujuan</span>
                                 @if(isset($notificationCount) && $notificationCount > 0)
                                     <span class="badge bg-white text-success rounded-pill">{{ $notificationCount }}</span>
                                 @endif
                             </div>
                             
-                            <div style="max-height: 300px; overflow-y: auto;">
+                            <!-- List Pesan -->
+                            <div style="max-height: 350px; overflow-y: auto;">
                                 @if(isset($todayNotifications) && count($todayNotifications) > 0)
                                     @foreach($todayNotifications as $notif)
-                                    <a href="{{ $notif->link }}" class="notify-item">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            
-                                            {{-- LOGIKA TAMPILAN: FOLDER vs MANUAL --}}
-                                            @if($notif->type == 'batch')
-                                                <!-- Tampilan Folder -->
-                                                <div class="d-flex align-items-center text-truncate" style="max-width: 75%;">
-                                                    <i class="fas fa-folder text-warning me-2 fs-5"></i>
-                                                    <strong class="text-dark text-truncate">{{ $notif->title }}</strong>
+                                    <div class="notify-item border-bottom p-3 bg-white hover-bg-light">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div class="d-flex align-items-center text-truncate" style="max-width: 70%;">
+                                                @if($notif->type == 'batch')
+                                                    <div class="bg-warning bg-opacity-10 text-warning rounded p-2 me-3"><i class="fas fa-folder-open"></i></div>
+                                                @else
+                                                    <div class="bg-info bg-opacity-10 text-info rounded p-2 me-3"><i class="fas fa-sms"></i></div>
+                                                @endif
+                                                
+                                                <div>
+                                                    <strong class="d-block text-dark text-truncate" style="font-size: 0.9rem;">{{ $notif->title }}</strong>
+                                                    <small class="text-muted">{{ $notif->desc }}</small>
                                                 </div>
-                                            @else
-                                                <!-- Tampilan Manual -->
-                                                <strong class="text-truncate" style="max-width: 75%;">{{ $notif->title }}</strong>
-                                            @endif
+                                            </div>
+                                            <span class="badge bg-light text-secondary border" style="font-size: 0.65rem;">Jatuh Tempo</span>
+                                        </div>
 
-                                            <span class="notify-time text-nowrap ms-2">
-                                                <i class="far fa-clock me-1"></i> {{ $notif->time->format('H:i') }}
-                                            </span>
-                                        </div>
-                                        
-                                        <div class="text-muted small text-truncate mt-1" style="max-width: 280px;">
+                                        <!-- TOMBOL AKSI PERSETUJUAN -->
+                                        <div class="d-flex gap-2 mt-2">
+                                            {{-- TOMBOL SETUJU (KIRIM) --}}
                                             @if($notif->type == 'batch')
-                                                <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25 px-2 py-0 me-1" style="font-size: 0.7rem;">Batch</span>
+                                                <form action="{{ route('sms.resend_batch', $notif->id) }}" method="POST" class="w-50" onsubmit="return confirm('Setujui pengiriman batch ini?');">
+                                                    @csrf
+                                                    <input type="hidden" name="new_due_date" value="">
+                                                    <input type="hidden" name="global_message" value="">
+                                                    <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">
+                                                        <i class="fas fa-check-circle me-1"></i> Setujui & Kirim
+                                                    </button>
+                                                </form>
+                                                
+                                                {{-- TOMBOL TOLAK (HAPUS) --}}
+                                                <button type="button" class="btn btn-outline-danger btn-sm w-50 fw-bold" data-bs-toggle="modal" data-bs-target="#rejectBatchModal{{ $notif->id }}">
+                                                    <i class="fas fa-trash me-1"></i> Tolak & Hapus
+                                                </button>
+                                            @else
+                                                {{-- Untuk Pesan Manual, arahkan ke halaman jadwal --}}
+                                                <a href="{{ route('pengiriman-terjadwal') }}" class="btn btn-light btn-sm w-100 text-primary border">Lihat Detail</a>
                                             @endif
-                                            {{ $notif->desc }}
                                         </div>
-                                    </a>
+                                    </div>
                                     @endforeach
                                 @else
                                     <div class="text-center p-5 text-muted">
-                                        <i class="fas fa-check-circle fa-3x mb-3 text-light"></i>
-                                        <p class="mb-0 small">Tidak ada pesan jatuh tempo hari ini.</p>
+                                        <i class="fas fa-check-circle fa-3x mb-3 text-success opacity-25"></i>
+                                        <p class="mb-0 small fw-bold">Semua beres!</p>
+                                        <span class="small">Tidak ada pesan jatuh tempo yang menunggu.</span>
                                     </div>
                                 @endif
-                            </div>
-                            
-                            <div class="text-center p-3 border-top bg-light">
-                                <a href="{{ route('pengiriman-terjadwal') }}" class="small text-decoration-none fw-bold text-success">Lihat Semua Jadwal</a>
                             </div>
                         </div>
                     </div>
@@ -378,6 +385,33 @@
         </div>
     </div>
 
+    {{-- MODAL KONFIRMASI TOLAK BATCH --}}
+    @if(isset($todayNotifications))
+        @foreach($todayNotifications->where('type', 'batch') as $notif)
+            <div class="modal fade" id="rejectBatchModal{{ $notif->id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4 border-0 shadow-lg">
+                        <div class="modal-body text-center p-4">
+                            <div class="mb-3 text-danger display-4"><i class="fas fa-exclamation-circle"></i></div>
+                            <h5 class="fw-bold">Tolak Pengiriman Batch?</h5>
+                            <p class="text-muted small mb-4">
+                                Anda akan menghapus batch <strong>"{{ $notif->title }}"</strong> ({{ $notif->pending_count ?? 'semua' }} pesan) beserta seluruh data pesan di dalamnya. Tindakan ini tidak bisa dibatalkan.
+                            </p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                                <form action="{{ route('sms.delete_batch', $notif->id) }}" method="POST">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Ya, Hapus Permanen</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    @endif
+
+
     <!-- 5. SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -393,23 +427,15 @@
                     mainContent.classList.toggle('full-width');
                 });
             }
-        });
-    </script>
-
-    @if (session('status'))
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Inisialisasi Toast jika ada
             var toastEl = document.getElementById('welcomeToast');
             if (toastEl) {
-                var toast = new bootstrap.Toast(toastEl, {
-                    autohide: true,
-                    delay: 5000
-                });
+                var toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
                 toast.show();
             }
         });
     </script>
-    @endif
     
     @yield('scripts')
 </body>
